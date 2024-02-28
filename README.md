@@ -71,6 +71,74 @@ class SpringKotlin101ApplicationTests {
 }
 ```
 
+## JPA 적용 하기
+
+### 지연 호출을 위한 설정
+
+지연 호출을 사용하기 위해서는, [KT-28525](https://youtrack.jetbrains.com/issue/KT-28525)에서의 설명과 같이 entity를 열어야 합니다. 
+해당 설정은 `build.gradle.kts`에 아래와 같습니다.
+```kotlin
+// build.gradle.kts
+plugins {
+    ...
+    kotlin("plugin.allopen") version "1.9.22"
+}
+
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.Embeddable")
+    annotation("jakarta.persistence.MappedSuperclass")
+}
+```
+
+### JPA Auditing 사용하기 
+
+JPA Auditing은 엔티티의 라이프사이클을 기준으로 실행되는 기능입니다 
+지원하는 라이프사이클은 아래와 같습니다.
+
+- @PrePersist : 엔티티가 저장(insert)되기 전 호출
+- @PreRemove : 엔티티가 삭제되기 전 후 호출
+- @PreUpdate : 엔티티가 업데이트되기 전 호출
+- @PostPersist : 엔티티가 저장된 후 호출
+- @PostRemove : 엔티티가 삭제된 후 호출
+- @PostUpdate : 엔티티가 업데이트된 후 호출
+- @PostLoad : 엔티티가 조회(select)된 후 호출
+
+#### 사용 예제
+
+아래 예제는 등록일 수정일에 대한 처리를 보여줍니다.
+
+```kotlin
+// Space.kt
+@Entity
+@EntityListeners(AuditingEntityListener::class) // 추가
+class Space{
+    @CreatedDate
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(nullable = false, updatable = false)
+    var regDtm: LocalDateTime? = null;
+    
+    @LastModifiedDate
+    @Column(nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    var modDtm: LocalDateTime? = null
+}
+
+// SpringBootApplication.kt
+@SpringBootApplication
+@EnableJpaAuditing // 추가 
+class SpringBootApplication
+
+fun main(args: Array<String>) {
+    runApplication<SpringBootApplication>(*args)
+}
+```
+
+
+### CRUD 예제
+
+`src/main/kotlin/io/github/lahuman/sk101/reservation` 를 참고 해주세요.
+
 
 ### Reference Documentation
 
